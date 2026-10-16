@@ -118,9 +118,4 @@ pytest -v
 
 ---
 
-## 8. Next Week I Would...
 
-- [ ] Implement database table partitioning for `activity_events` based on monthly time ranges (`created_at`).
-- [ ] Add Redis-backed distributed locks or advisory locks for multi-region worker coordination.
-- [ ] Implement Server-Sent Events (SSE) for low-overhead live updates in the active dashboard view.
-- [ ] Add full-text search using PostgreSQL `tsvector` with GIN indexing for sub-millisecond keyword searches across descriptions.
