@@ -39,7 +39,7 @@ class WorkItemClaim(BaseModel):
     pass
 
 
-class WorkItemRead(BaseModel):
+class WorkItemListItem(BaseModel):
     id: str
     title: str
     description: str
@@ -57,14 +57,17 @@ class WorkItemRead(BaseModel):
     team: Optional[TeamSummary] = None
     assignee: Optional[UserRead] = None
     creator: Optional[UserRead] = None
-    activities: Optional[List[ActivityEventRead]] = None
-    comments: Optional[List[CommentRead]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
+class WorkItemRead(WorkItemListItem):
+    activities: Optional[List[ActivityEventRead]] = None
+    comments: Optional[List[CommentRead]] = None
+
+
 class PaginatedWorkItems(BaseModel):
-    items: List[WorkItemRead]
+    items: List[WorkItemListItem]
     next_cursor: Optional[str] = None
     has_more: bool
     total_count: Optional[int] = None
