@@ -1,0 +1,91 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: newtonite_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: newtonite_ops
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: newtonite_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=newtonite_ops
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/newtonite_ops
+      - SECRET_KEY=operations-under-pressure-secret-key-23131010924
+      - ENVIRONMENT=production
+    command: >
+      sh -c "python -m app.seeder &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: newtonite_outbox_worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=newtonite_ops
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/newtonite_ops
+    command: python -m app.worker.outbox_worker
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: newtonite_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000/api/v1
+
+  # One-command test execution service: docker compose run --rm test
+  test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: newtonite_test_runner
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - TEST_DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/newtonite_ops
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/newtonite_ops
+      - SECRET_KEY=test-secret-key-23131010924
+    command: pytest -v
+
+volumes:
+  pgdata:
