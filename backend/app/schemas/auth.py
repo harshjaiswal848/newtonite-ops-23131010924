@@ -24,7 +24,7 @@ class TeamRoleInfo(BaseModel):
 
 class UserRead(BaseModel):
     id: str
-    email: EmailStr
+    email: str
     full_name: str
     is_active: bool
     roles: List[TeamRoleInfo] = []

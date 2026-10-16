@@ -257,21 +257,14 @@ async def claim_work_item(
     result = await db.execute(stmt)
 
     if result.rowcount == 0:
-        # Check why 0 rows updated
         item_check = await db.execute(select(WorkItem).where(WorkItem.id == item_id))
         existing = item_check.scalar_one_or_none()
         if not existing:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Work item not found.")
         
-        if existing.assignee_id == current_user_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="You have already claimed this work item."
-            )
-        
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Conflict: This work item has already been claimed by another team member."
+            detail="Conflict: This work item has already been claimed."
         )
 
     # Activity log recorded in the SAME transaction

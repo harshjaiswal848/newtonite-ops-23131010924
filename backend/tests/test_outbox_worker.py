@@ -1,7 +1,7 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import pytest
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.outbox import OutboxJob
@@ -16,6 +16,10 @@ async def test_outbox_worker_processes_jobs_reliably(db_session: AsyncSession):
     1. Pending jobs are processed and marked 'completed'.
     2. Repeated execution does not re-process completed jobs (idempotent).
     """
+    notification_sink_log.clear()
+    await db_session.execute(delete(OutboxJob))
+    await db_session.commit()
+
     job_id = str(uuid.uuid4())
     test_payload = {
         "item_id": "item-outbox-test-1",
@@ -30,7 +34,7 @@ async def test_outbox_worker_processes_jobs_reliably(db_session: AsyncSession):
         status=OutboxJobStatus.PENDING.value,
         attempts=0,
         max_attempts=3,
-        scheduled_at=datetime.now(timezone.utc),
+        scheduled_at=datetime.now(timezone.utc) - timedelta(seconds=5),
         created_at=datetime.now(timezone.utc),
     )
     db_session.add(job)
@@ -75,7 +79,7 @@ async def test_outbox_worker_retries_and_marks_failed_on_max_attempts(db_session
         status=OutboxJobStatus.PENDING.value,
         attempts=2,
         max_attempts=3,
-        scheduled_at=datetime.now(timezone.utc),
+        scheduled_at=datetime.now(timezone.utc) - timedelta(seconds=5),
         created_at=datetime.now(timezone.utc),
     )
     db_session.add(job)

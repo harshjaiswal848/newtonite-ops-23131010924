@@ -3,7 +3,7 @@ from typing import Optional, List
 from pydantic import BaseModel, Field, ConfigDict
 from app.models.enums import WorkItemType, WorkItemPriority, WorkItemStatus
 from app.schemas.auth import UserRead
-from app.schemas.team import TeamRead
+from app.schemas.team import TeamSummary
 from app.schemas.activity import ActivityEventRead, CommentRead
 
 
@@ -54,7 +54,7 @@ class WorkItemRead(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    team: Optional[TeamRead] = None
+    team: Optional[TeamSummary] = None
     assignee: Optional[UserRead] = None
     creator: Optional[UserRead] = None
     activities: Optional[List[ActivityEventRead]] = None

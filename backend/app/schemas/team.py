@@ -23,6 +23,15 @@ class MembershipRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class TeamSummary(BaseModel):
+    id: str
+    name: str
+    slug: str
+    description: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class TeamRead(BaseModel):
     id: str
     name: str
